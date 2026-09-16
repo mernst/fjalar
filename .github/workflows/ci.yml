@@ -28,6 +28,10 @@ jobs:
   # The JDK version doesn't matter, but these Docker images happen to use
   # different underlying OS versions.
 
+  # These jobs run ./test.sh, which builds Fjalar, checks that command-line
+  # options are documented, builds the documentation, and runs the Kvasir
+  # regression tests.
+
   ubuntu_stable:
     runs-on: ubuntu-latest
     container:
@@ -66,3 +70,45 @@ jobs:
           fetch-depth: 25
       - name: test.sh
         run: ./test.sh
+
+  # These jobs run ./test-kvasir.sh, which runs Daikon's own scripts/test-kvasir.sh
+  # against this repository.  That additionally runs the DynComp regression tests.
+
+  kvasir_ubuntu_stable:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/daikon-ubuntu-jdk11-plus:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          set-safe-directory: true
+          fetch-depth: 25
+      - name: test-kvasir.sh
+        run: ./test-kvasir.sh
+
+  kvasir_ubuntu_rolling:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/daikon-ubuntu-jdk25-plus:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          set-safe-directory: true
+          fetch-depth: 25
+      - name: test-kvasir.sh
+        run: ./test-kvasir.sh
+
+  kvasir_rocky:
+    runs-on: ubuntu-latest
+    container:
+      image: mdernst/daikon-rockylinux-jdk11-plus:latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          set-safe-directory: true
+          fetch-depth: 25
+      - name: test-kvasir.sh
+        run: ./test-kvasir.sh
