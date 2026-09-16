@@ -38,7 +38,7 @@ echo "DAIKONDIR=$DAIKONDIR"
 
 
 if [ -d "/tmp/git-scripts" ] ; then
-  (cd /tmp/git-scripts && git -C pull -q) > /dev/null 2>&1
+  git -C /tmp/git-scripts pull -q || true
 else
   (cd /tmp && git clone --depth 1 -q https://github.com/plume-lib/git-scripts.git)
 fi
