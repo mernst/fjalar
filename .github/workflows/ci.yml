@@ -42,6 +42,9 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test.sh
         run: ./test.sh
 
@@ -55,6 +58,9 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test.sh
         run: ./test.sh
 
@@ -68,6 +74,9 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test.sh
         run: ./test.sh
 
@@ -84,6 +93,9 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test-kvasir.sh
         run: ./test-kvasir.sh
 
@@ -97,6 +109,9 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test-kvasir.sh
         run: ./test-kvasir.sh
 
@@ -110,5 +125,8 @@ jobs:
         with:
           set-safe-directory: true
           fetch-depth: 25
+          # Nothing pushes, so do not leave a credential in the workspace while
+          # building and running code from a pull request.
+          persist-credentials: false
       - name: test-kvasir.sh
         run: ./test-kvasir.sh
