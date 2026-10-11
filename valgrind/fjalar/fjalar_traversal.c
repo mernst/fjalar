@@ -929,17 +929,19 @@ void visitVariableGroup(VariableOrigin varOrigin,
       continue;
     }
 
+    // Omit a formal parameter whose location Fjalar cannot read.  This
+    // test does not depend on stackBaseAddr, so that the .decls file
+    // (which is written without a stack) declares exactly the
+    // variables that the .dtrace file contains.  return is an
+    // exception, as we figure it out ourself.
+    if ((varOrigin == FUNCTION_FORMAL_PARAM) &&
+        !var->validLoc && !VG_STREQ("return", var->name)) {
+      FJALAR_DPRINTF("\t[visitVariableGroup] invalid loc, punting\n");
+      continue;
+    }
+
     if ((varOrigin == FUNCTION_FORMAL_PARAM) && stackBaseAddr) {
       ThreadId tid = VG_(get_running_tid)();
-
-      // (comment added 2009)  
-      // HACKISH. needed to work around bad location information in
-      // the DWARF tables, while still providing tools with the variables
-      // if they care. return is an exception as we figure it out ourself.
-      if(!var->validLoc && !VG_STREQ("return", var->name)) {
-        FJALAR_DPRINTF("\t[visitVariableGroup] invalid loc, punting\n");
-        continue;
-      }
 
       FJALAR_DPRINTF("\t[visitVariableGroup] baseAddr: %p, baseAddrGuest: %p var->byteOffset: %x(%d)\n", (void *)stackBaseAddr, (void *)stackBaseAddrGuest, (unsigned int)var->byteOffset, var->byteOffset);
       FJALAR_DPRINTF("\t[visitVariableGroup] State of Guest Stack [%p - %p] \n", (void *)funcPtr->guestStackStart, (void *)funcPtr->guestStackEnd);
@@ -1024,7 +1026,7 @@ void visitVariableGroup(VariableOrigin varOrigin,
               // DWARF supplied constant
               var_loc = dloc->atom_offset;
 
-            } else if((op >= DW_OP_plus) && (op <= DW_OP_plus_uconst)) {
+            } else if(op == DW_OP_plus_uconst) {
               // Add DWARF supplied constant to value to result of last DWARF operation
               var_loc += dloc->atom_offset;
 
