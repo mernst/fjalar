@@ -30,14 +30,14 @@ struct pair { long first; long second; };
 volatile long sink;
 
 // p is split across two registers (DW_OP_piece), which Fjalar does not
-// support, so p is omitted.
+// support, so p is omitted from both the .decls and .dtrace files.
 __attribute__((noinline)) void split(struct pair p) {
   sink = p.first;
   sink = p.second;
 }
 
 // d is in a floating-point register, which Fjalar cannot read, so d is
-// omitted.
+// omitted from both the .decls and .dtrace files.
 __attribute__((noinline)) double identity(double d) {
   return d;
 }

@@ -942,8 +942,6 @@ void visitVariableGroup(VariableOrigin varOrigin,
     }
 
     if ((varOrigin == FUNCTION_FORMAL_PARAM) && stackBaseAddr) {
-      ThreadId tid = VG_(get_running_tid)();
-
       FJALAR_DPRINTF("\t[visitVariableGroup] baseAddr: %p, baseAddrGuest: %p var->byteOffset: %x(%d)\n", (void *)stackBaseAddr, (void *)stackBaseAddrGuest, (unsigned int)var->byteOffset, var->byteOffset);
       FJALAR_DPRINTF("\t[visitVariableGroup] State of Guest Stack [%p - %p] \n", (void *)funcPtr->guestStackStart, (void *)funcPtr->guestStackEnd);
       FJALAR_DPRINTF("\t[visitVariableGroup] State of Virtual Stack [%p - %p] \n", (void *)funcPtr->lowestVirtSP, (void *)(funcPtr->lowestVirtSP + (funcPtr->guestStackEnd - funcPtr->guestStackStart)));
@@ -1027,7 +1025,7 @@ void visitVariableGroup(VariableOrigin varOrigin,
               // DWARF supplied constant
               var_loc = dloc->atom_offset;
 
-            } else if((op >= DW_OP_plus) && (op <= DW_OP_plus_uconst)) {
+            } else if(op == DW_OP_plus_uconst) {
               // Add DWARF supplied constant to value to result of last DWARF operation
               var_loc += dloc->atom_offset;
 
@@ -1049,22 +1047,20 @@ void visitVariableGroup(VariableOrigin varOrigin,
               var_loc = (Addr)&entryRegs[regNum];
 
             } else if((op >= DW_OP_breg0) && (op <= DW_OP_breg31)) {
-              // Get value pointed to by architectural register
+              // Add an offset to the value that the architectural
+              // register held at function entrance (after the
+              // prologue).  At function exit, the body may have
+              // overwritten the register and the epilogue has already
+              // restored or popped it.
               unsigned int regNum = op - DW_OP_breg0;
-              if (regNum == DWARF_SP_REG) {
-                // Use the stack pointer at function entry (after the
-                // prologue).  At function exit, the epilogue has already
-                // popped the stack frame.
-                reg_val = funcPtr->guestStackStart + VG_STACK_REDZONE_SZB;
-              } else if (dwarf_reg_is_readable(regNum)) {
-                reg_val = read_dwarf_reg(tid, regNum);
-              } else {
-                FJALAR_DPRINTF("\tCannot read register %s; value is nonsensical\n",
+              if (!entryRegs || !dwarf_reg_is_readable(regNum)) {
+                FJALAR_DPRINTF("\tRegister %s was not saved at entrance; value is nonsensical\n",
                                dwarf_reg_name(regNum));
                 var_loc = 0;
                 break;
               }
-              FJALAR_DPRINTF("\tObtaining register value: [%%%s]: %p\n", dwarf_reg_name(regNum),
+              reg_val = entryRegs[regNum];
+              FJALAR_DPRINTF("\tObtaining entrance register value: [%%%s]: %p\n", dwarf_reg_name(regNum),
                              (void *)reg_val);
               var_loc = reg_val + dloc->atom_offset;
               FJALAR_DPRINTF("\tAdding %lld to the register value for %p\n", dloc->atom_offset, (void *)var_loc);
@@ -1107,8 +1103,15 @@ void visitVariableGroup(VariableOrigin varOrigin,
             var->entryLocGuest = var_loc;
             basePtrValueGuest = var_loc; }
           else {
+            // The location is not on the stack, so Fjalar reads the
+            // variable where it is.  For a register location, that is
+            // entryRegs, which has no guest address; using its address
+            // as the guest address gives a static array within the
+            // variable a non-null address.
             basePtrValue = var_loc;
             var->entryLoc = var_loc;
+            basePtrValueGuest = var_loc;
+            var->entryLocGuest = var_loc;
           }
         }
       }

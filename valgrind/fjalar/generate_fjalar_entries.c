@@ -2603,6 +2603,17 @@ static void extractOneFormalParameterVar(FunctionEntry* f,
     varPtr->location_expression_size = paramPtr->dwarf_stack_size;
   }
 
+  {
+    unsigned int i;
+    for (i = 0; i < paramPtr->dwarf_stack_size; i++) {
+      UInt atom = paramPtr->dwarf_stack[i].atom;
+      if ((atom >= DW_OP_reg0 && atom <= DW_OP_reg31) ||
+          (atom >= DW_OP_breg0 && atom <= DW_OP_breg31)) {
+        f->savesEntryRegs = True;
+      }
+    }
+  }
+
   if (paramPtr->location_has_unsupported_op) {
     // varPtr->validLoc remains 0, so Fjalar omits the formal parameter.
     FJALAR_DPRINTF(" location contains an unsupported operation\n");
@@ -2615,7 +2626,6 @@ static void extractOneFormalParameterVar(FunctionEntry* f,
     FJALAR_DPRINTF(" location_type: %u, byteOffset: %x\n", varPtr->locationType, (unsigned int)varPtr->byteOffset);
   } else if (isSupportedRegisterLocation(paramPtr, varPtr)) {
     UInt regNum = paramPtr->dwarf_stack[0].atom - DW_OP_reg0;
-    f->hasRegisterParams = True;
     varPtr->validLoc = 1;
     varPtr->locationType = REGISTER_LOCATION;
     FJALAR_DPRINTF(" location is register %s\n", dwarf_reg_name(regNum));

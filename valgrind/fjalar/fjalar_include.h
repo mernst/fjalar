@@ -690,10 +690,10 @@ typedef struct _FunctionEntry {
 
   UInt nonce;
 
-  // True if some formal parameter's location is a register.  If so,
-  // Fjalar saves the registers at function entrance in
-  // FunctionExecutionState.entryRegs.
-  Bool hasRegisterParams;
+  // True if some formal parameter's location expression uses a
+  // register (DW_OP_reg* or DW_OP_breg*).  If so, Fjalar saves the
+  // registers at function entrance in FunctionExecutionState.entryRegs.
+  Bool savesEntryRegs;
 
 } FunctionEntry;
 
@@ -818,17 +818,23 @@ typedef struct {
   // should be invisible to the calling function anyways.
   char* virtualStack;
   int virtualStackByteSize; // Number of 1-byte entries in virtualStack
+  // Number of bytes in the allocation that starts at virtualStack,
+  // which also contains entryRegs
+  int allocByteSize;
   int virtualStackFPOffset; // Where in the stack the frame pointer was
 
   // The values at function entrance of the registers, indexed by
   // DWARF register number:  entryRegs[N] holds register N, if
   // dwarf_reg_is_readable(N).  A formal parameter whose location is a
-  // register (DW_OP_reg*) is read from here, at both entrance and
-  // exit, for the same reason as virtualStack.  At function entrance,
+  // register (DW_OP_reg*) is read from here, and the address of one
+  // whose location is relative to a register (DW_OP_breg*) is computed
+  // from here, at both entrance and exit, for the same reason as
+  // virtualStack:  the function body and epilogue may change the
+  // registers.  At function entrance,
   // Fjalar copies the readable registers, with their A and V bits and
   // DynComp tags, to entryRegs.  entryRegs has FJALAR_NUM_DWARF_REGS
   // elements and lies in the same allocation as virtualStack, just
-  // after it; it is null if func->hasRegisterParams is false.
+  // after it; it is null if func->savesEntryRegs is false.
   Addr* entryRegs;
 
 
